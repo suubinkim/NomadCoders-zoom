@@ -4,7 +4,7 @@
   "description": "Zoom Clone using WevRTC and Websockets",
   "license": "MIC",
   "scripts": {
-    "dev" : "nodemon"
+    "dev": "nodemon"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.6",
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "express": "^4.17.3",
-    "pug": "^3.0.2"
+    "pug": "^3.0.2",
+    "ws": "^8.5.0"
   }
 }
