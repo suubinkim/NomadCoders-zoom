@@ -37,7 +37,7 @@ wss.on("connection", (socket) => {
     //브라우저로부터 온 메세지 받기
     socket.on("message", (message) => {
         //연결된 모든 소켓으로 받은 메세지 보내기
-        sockets.forEach(aSocket => aSocket.send(message));
+        sockets.forEach(aSocket => aSocket.send(message.toString()));
     });
 });
 
