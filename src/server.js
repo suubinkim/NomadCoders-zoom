@@ -29,15 +29,25 @@ const sockets = [];
 wss.on("connection", (socket) => {
     //연결되면 db에 넣기
     sockets.push(socket);
+    //닉네임을 정하지 않았을때 익명으로 정해주기
+    socket["nickname"] = "Anon";
     console.log("Connected to Browser ✅");
     //소켓 종료
     socket.on("close", () => {
         console.log("Disconnected from Browser ❌");
     });
     //브라우저로부터 온 메세지 받기
-    socket.on("message", (message) => {
-        //연결된 모든 소켓으로 받은 메세지 보내기
-        sockets.forEach(aSocket => aSocket.send(message.toString()));
+    socket.on("message", (msg) => {
+        //Stirng으로 온 메세지를 js object로 변경
+        const message = JSON.parse(msg);
+        //메세지 타입에 따라 다르게 보여주기
+        switch (message.type) {
+            case "new_message" :
+             //연결된 모든 소켓으로 받은 메세지 보내기
+                sockets.forEach(aSocket => aSocket.send(`${socket.nickname} : ${message.payload}`));   
+            case "nickname" :
+                socket["nickname"] = message.payload;
+        }
     });
 });
 

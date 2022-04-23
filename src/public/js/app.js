@@ -41,6 +41,8 @@ function handleNickSubmit(event) {
     event.preventDefault();
     const input = nickForm.querySelector("input");
     socket.send(makeMessage("nickname", input.value));
+    //메세지 보낸후 창 비우기
+    input.value = "";
 }
 
 messageForm.addEventListener("submit", handleSubmit);
