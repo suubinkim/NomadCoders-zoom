@@ -21,18 +21,23 @@ const server = http.createServer(app);
     //http 서버 위에 ws 서버 만들기
 const wss = new WebSocketServer({server});
 
+
+//fake database 만들기
+const sockets = [];
+
 //connection이 생기면 socket을 받음 여기서의 socket = 연결된 브라우저
 wss.on("connection", (socket) => {
+    //연결되면 db에 넣기
+    sockets.push(socket);
     console.log("Connected to Browser ✅");
-    //브라우저에 메세지 보내기
-    socket.send("hello!!");
     //소켓 종료
     socket.on("close", () => {
         console.log("Disconnected from Browser ❌");
     });
     //브라우저로부터 온 메세지 받기
     socket.on("message", (message) => {
-        console.log(message.toString());
+        //연결된 모든 소켓으로 받은 메세지 보내기
+        sockets.forEach(aSocket => aSocket.send(message));
     });
 });
 
