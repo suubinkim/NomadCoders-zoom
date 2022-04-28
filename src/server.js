@@ -1,5 +1,6 @@
 import express from "express";
-import SocketIO from "socket.io";
+import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 import http from "http";
 
 const app = express();
@@ -19,7 +20,38 @@ const handleListen = () => console.log('Listening on http://localhost:3000');
 //같은 서버(port)에서 http, webSocket 둘 다 작동 시키기
 const httpServer = http.createServer(app);
 //socketIO를 서버에 설치
-const wsServer = SocketIO(httpServer);
+const wsServer = new Server(httpServer, {
+    cors: {
+        origin : ["https://admin.socket.io"],
+        credentials : true,
+    },
+});
+
+instrument(wsServer, {
+    auth: false
+});
+
+function publicRooms() {
+    const { 
+        sockets: { 
+            adapter: { sids, rooms },
+        },
+    } = wsServer;
+    //채팅방 리스트 보여주기
+    //sids는 소켓id
+    const publicRooms = [];
+    rooms.forEach((_,key) => {
+        if(sids.get(key) === undefined) {
+            publicRooms.push(key);
+        }
+    });
+    return publicRooms;
+}
+
+//채팅방 참여인원
+function countRoom(roomName) {
+    return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
 
 wsServer.on("connection", (socket) => {
     socket["nickname"] = "Anonymous";
@@ -28,13 +60,19 @@ wsServer.on("connection", (socket) => {
         //방에 참가하기
         socket.join(roomName);
         //방 이름 보여주기
-        showRoom();
+        showRoom(countRoom(roomName));
         //특정 이벤트(welcome)를 roomName에 emit -> 입장메세지 전송(본인 제외)
-        socket.to(roomName).emit("welcome", socket.nickname);
+        socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
+        //연결된 모두에게 방 리스트 전송
+        wsServer.sockets.emit("room_change", publicRooms());
     });
     //연결이 끊어지는 중 (끊어진것x)
     socket.on("disconnecting", () => {
-        socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickname));
+        socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickname, countRoom(room) -1));
+        wsServer.sockets.emit("room_change", publicRooms());
+    });
+    socket.on("disconnect", () => {
+        wsServer.sockets.emit("room_change", publicRooms());
     });
     //메세지 보내기
     socket.on("new_message", (msg, room, done) => {
