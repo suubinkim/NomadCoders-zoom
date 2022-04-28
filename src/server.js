@@ -22,7 +22,15 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", (socket) => {
-    console.log(socket);
+    //프론트에서 보낸 event 받기
+    socket.on("enter_room", (roomName, showRoom) => {
+        //방에 참가하기
+        socket.join(roomName);
+        //방 이름 보여주기
+        showRoom();
+        //특정 이벤트(welcome)를 roomName에 emit -> 입장메세지 전송(본인 제외)
+        socket.to(roomName).emit("welcome");
+    });
 });
 
 
