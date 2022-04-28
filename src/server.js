@@ -22,6 +22,7 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", (socket) => {
+    socket["nickname"] = "Anonymous";
     //프론트에서 보낸 event 받기
     socket.on("enter_room", (roomName, showRoom) => {
         //방에 참가하기
@@ -29,17 +30,19 @@ wsServer.on("connection", (socket) => {
         //방 이름 보여주기
         showRoom();
         //특정 이벤트(welcome)를 roomName에 emit -> 입장메세지 전송(본인 제외)
-        socket.to(roomName).emit("welcome");
+        socket.to(roomName).emit("welcome", socket.nickname);
     });
     //연결이 끊어지는 중 (끊어진것x)
     socket.on("disconnecting", () => {
-        socket.rooms.forEach((room) => socket.to(room).emit("bye"));
+        socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickname));
     });
     //메세지 보내기
     socket.on("new_message", (msg, room, done) => {
-        socket.to(room).emit("new_message", msg);
+        socket.to(room).emit("new_message", `${socket.nickname} : ${msg}`);
         done();
     });
+    //닉네임 저장하기
+    socket.on("nickname", (nickname) => socket["nickname"] = nickname);
 });
 
 
