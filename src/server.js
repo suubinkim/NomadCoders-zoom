@@ -31,6 +31,15 @@ wsServer.on("connection", (socket) => {
         //특정 이벤트(welcome)를 roomName에 emit -> 입장메세지 전송(본인 제외)
         socket.to(roomName).emit("welcome");
     });
+    //연결이 끊어지는 중 (끊어진것x)
+    socket.on("disconnecting", () => {
+        socket.rooms.forEach((room) => socket.to(room).emit("bye"));
+    });
+    //메세지 보내기
+    socket.on("new_message", (msg, room, done) => {
+        socket.to(room).emit("new_message", msg);
+        done();
+    });
 });
 
 
