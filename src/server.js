@@ -1,5 +1,5 @@
 import express from "express";
-import {WebSocketServer} from "ws";
+import SocketIO from "socket.io";
 import http from "http";
 
 const app = express();
@@ -17,38 +17,43 @@ app.get("/*", (req, res) => res.redirect("/"));
 const handleListen = () => console.log('Listening on http://localhost:3000');
 
 //같은 서버(port)에서 http, webSocket 둘 다 작동 시키기
-const server = http.createServer(app);
-    //http 서버 위에 ws 서버 만들기
-const wss = new WebSocketServer({server});
+const httpServer = http.createServer(app);
+//socketIO를 서버에 설치
+const wsServer = SocketIO(httpServer);
 
-
-//fake database 만들기
-const sockets = [];
-
-//connection이 생기면 socket을 받음 여기서의 socket = 연결된 브라우저
-wss.on("connection", (socket) => {
-    //연결되면 db에 넣기
-    sockets.push(socket);
-    //닉네임을 정하지 않았을때 익명으로 정해주기
-    socket["nickname"] = "Anon";
-    console.log("Connected to Browser ✅");
-    //소켓 종료
-    socket.on("close", () => {
-        console.log("Disconnected from Browser ❌");
-    });
-    //브라우저로부터 온 메세지 받기
-    socket.on("message", (msg) => {
-        //Stirng으로 온 메세지를 js object로 변경
-        const message = JSON.parse(msg);
-        //메세지 타입에 따라 다르게 보여주기
-        switch (message.type) {
-            case "new_message" :
-             //연결된 모든 소켓으로 받은 메세지 보내기
-                sockets.forEach(aSocket => aSocket.send(`${socket.nickname} : ${message.payload}`));   
-            case "nickname" :
-                socket["nickname"] = message.payload;
-        }
-    });
+wsServer.on("connection", (socket) => {
+    console.log(socket);
 });
 
-server.listen(3000, handleListen);
+
+// const wss = new WebSocketServer({server});
+// //fake database 만들기
+// const sockets = [];
+
+// //connection이 생기면 socket을 받음 여기서의 socket = 연결된 브라우저
+// wss.on("connection", (socket) => {
+//     //연결되면 db에 넣기
+//     sockets.push(socket);
+//     //닉네임을 정하지 않았을때 익명으로 정해주기
+//     socket["nickname"] = "Anon";
+//     console.log("Connected to Browser ✅");
+//     //소켓 종료
+//     socket.on("close", () => {
+//         console.log("Disconnected from Browser ❌");
+//     });
+//     //브라우저로부터 온 메세지 받기
+//     socket.on("message", (msg) => {
+//         //Stirng으로 온 메세지를 js object로 변경
+//         const message = JSON.parse(msg);
+//         //메세지 타입에 따라 다르게 보여주기
+//         switch (message.type) {
+//             case "new_message" :
+//              //연결된 모든 소켓으로 받은 메세지 보내기
+//                 sockets.forEach(aSocket => aSocket.send(`${socket.nickname} : ${message.payload}`));   
+//             case "nickname" :
+//                 socket["nickname"] = message.payload;
+//         }
+//     });
+// });
+
+httpServer.listen(3000, handleListen);
