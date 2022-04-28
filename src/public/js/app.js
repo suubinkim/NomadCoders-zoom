@@ -33,6 +33,10 @@ function handleSubmit(event) {
     const input = messageForm.querySelector("input");
     //메세지 보내기 프론트 -> 백
     socket.send(makeMessage("new_message", input.value));
+    //받은 메세지 보여주기
+    const li = document.createElement("li");
+    li.innerText = `You : ${input.value}`;
+    messageList.append(li);
     //메세지 보낸후 창 비우기
     input.value = "";
 }
